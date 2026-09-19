@@ -4,19 +4,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type User = {
   name?: string;
   email: string;
+  password?: string;
 };
 
 type AuthContextType = {
   user: User | null;
-  login: (email: string) => void;
-  signup: (name: string, email: string) => void;
+  login: (email: string, password?: string) => Promise<void>;
+  signup: (name: string, email: string, password?: string) => Promise<void>;
   logout: () => void;
 };
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: () => {},
-  signup: () => {},
+  login: async () => {},
+  signup: async () => {},
   logout: () => {},
 });
 
@@ -38,40 +39,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const login = async (email: string) => {
-    try {
-      // Check our mock database of registered users
-      const existingUsersStr = await AsyncStorage.getItem('usersDatabase');
-      const existingUsers = existingUsersStr ? JSON.parse(existingUsersStr) : {};
-      
-      // If the user exists in our mock DB, grab their full profile (with name)
-      // Otherwise, just log them in with their email
-      const loggedInUser = existingUsers[email] || { email };
-      
-      setUser(loggedInUser);
-      await AsyncStorage.setItem('authUser', JSON.stringify(loggedInUser));
-    } catch (e) {
-      console.error(e);
+  const login = async (email: string, password?: string) => {
+    const existingUsersStr = await AsyncStorage.getItem('usersDatabase');
+    const existingUsers = existingUsersStr ? JSON.parse(existingUsersStr) : {};
+    
+    const userRecord = existingUsers[email.toLowerCase()];
+    
+    if (!userRecord || userRecord.password !== password) {
+      throw new Error('Incorrect credentials');
     }
+    
+    const activeUser = { name: userRecord.name, email: userRecord.email };
+    setUser(activeUser);
+    await AsyncStorage.setItem('authUser', JSON.stringify(activeUser));
   };
 
-  const signup = async (name: string, email: string) => {
-    try {
-      const newUser = { name, email };
-      
-      // 1. Log the user in
-      setUser(newUser);
-      await AsyncStorage.setItem('authUser', JSON.stringify(newUser));
-      
-      // 2. Save them to our mock database so we remember their name later
-      const existingUsersStr = await AsyncStorage.getItem('usersDatabase');
-      const existingUsers = existingUsersStr ? JSON.parse(existingUsersStr) : {};
-      
-      existingUsers[email] = newUser;
-      await AsyncStorage.setItem('usersDatabase', JSON.stringify(existingUsers));
-    } catch (e) {
-      console.error(e);
+  const signup = async (name: string, email: string, password?: string) => {
+    const existingUsersStr = await AsyncStorage.getItem('usersDatabase');
+    const existingUsers = existingUsersStr ? JSON.parse(existingUsersStr) : {};
+    
+    const lowerEmail = email.toLowerCase();
+    
+    if (existingUsers[lowerEmail]) {
+      throw new Error('User with this email already exists');
     }
+    
+    const newUserRecord = { name, email: lowerEmail, password };
+    existingUsers[lowerEmail] = newUserRecord;
+    
+    await AsyncStorage.setItem('usersDatabase', JSON.stringify(existingUsers));
+    
+    const activeUser = { name, email: lowerEmail };
+    setUser(activeUser);
+    await AsyncStorage.setItem('authUser', JSON.stringify(activeUser));
   };
 
   const logout = async () => {
