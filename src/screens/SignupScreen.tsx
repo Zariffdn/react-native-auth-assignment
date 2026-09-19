@@ -14,12 +14,12 @@ export default function SignupScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     setError('');
     
-    // check required fields
-    if (!name || !email || !password) {
-      setError('All fields are required');
+    // check missing fields
+    if (!name.trim() || !email.trim() || !password) {
+      setError('Missing fields');
       return;
     }
 
@@ -32,11 +32,15 @@ export default function SignupScreen({ navigation }: any) {
     
     // check password length
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Password length less than 6 characters');
       return;
     }
 
-    signup(name, email);
+    try {
+      await signup(name.trim(), email.trim(), password);
+    } catch (e: any) {
+      setError(e.message || 'Error signing up');
+    }
   };
 
   return (

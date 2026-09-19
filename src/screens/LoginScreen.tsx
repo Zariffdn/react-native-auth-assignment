@@ -13,7 +13,7 @@ export default function LoginScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError('');
     
     // validate email
@@ -25,17 +25,15 @@ export default function LoginScreen({ navigation }: any) {
     
     // check password length
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Invalid password format');
       return;
     }
     
-    // mock bad credentials
-    if (password !== 'password123') {
-      setError('Incorrect credentials');
-      return;
+    try {
+      await login(email, password);
+    } catch (e: any) {
+      setError(e.message || 'Incorrect credentials');
     }
-
-    login(email);
   };
 
   return (
