@@ -39,20 +39,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string) => {
-    const loggedInUser = { email };
-    setUser(loggedInUser);
-    await AsyncStorage.setItem('authUser', JSON.stringify(loggedInUser));
+    try {
+      // Check our mock database of registered users
+      const existingUsersStr = await AsyncStorage.getItem('usersDatabase');
+      const existingUsers = existingUsersStr ? JSON.parse(existingUsersStr) : {};
+      
+      // If the user exists in our mock DB, grab their full profile (with name)
+      // Otherwise, just log them in with their email
+      const loggedInUser = existingUsers[email] || { email };
+      
+      setUser(loggedInUser);
+      await AsyncStorage.setItem('authUser', JSON.stringify(loggedInUser));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const signup = async (name: string, email: string) => {
-    const newUser = { name, email };
-    setUser(newUser);
-    await AsyncStorage.setItem('authUser', JSON.stringify(newUser));
+    try {
+      const newUser = { name, email };
+      
+      // 1. Log the user in
+      setUser(newUser);
+      await AsyncStorage.setItem('authUser', JSON.stringify(newUser));
+      
+      // 2. Save them to our mock database so we remember their name later
+      const existingUsersStr = await AsyncStorage.getItem('usersDatabase');
+      const existingUsers = existingUsersStr ? JSON.parse(existingUsersStr) : {};
+      
+      existingUsers[email] = newUser;
+      await AsyncStorage.setItem('usersDatabase', JSON.stringify(existingUsers));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const logout = async () => {
-    setUser(null);
-    await AsyncStorage.removeItem('authUser');
+    try {
+      setUser(null);
+      await AsyncStorage.removeItem('authUser');
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
