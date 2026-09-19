@@ -13,3 +13,6 @@ A simple React Native application with Login and Signup functionality, using Rea
 1. Clone the repository.
 2. Run `npm install` to install dependencies.
 3. Run `npm run ios` or `npm run android` to start the app on a simulator/emulator, or `npm start` to open the Expo development server.
+
+## Demo
+[Click here to watch the Demo Video](https://github.com/Zariffdn/react-native-auth-assignment/blob/master/demo.mp4)
